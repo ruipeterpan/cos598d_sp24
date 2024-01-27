@@ -104,7 +104,7 @@ In the report, include the following content:
 - Run each task for 40 iterations (40 minibatches of data). Discard the timings of the first iteration and report the average time per iteration for the remaining iterations for each task (2(a), 2(b), and 3). To time your code, see [this](https://realpython.com/python-timer/).
 - Reason about the difference (or the lack of difference) among different setups. Feel free to refer to the [PyTorch Distributed [VLDB '18]](https://arxiv.org/pdf/2006.15704.pdf) paper for more context.
 - Comment on the scalability of distributed ML based on your results.
-- [Optinal] If you chose to do task 4, 
+- [Optional] If you chose to do task 4, include a comparison of the network traffic in different setups and your reasoning of the differences.
 - Provide any implementation details.
 - Code for each task should be in different directories: `task2a`, `task2b`, and `task3`.
 - All your code that requires PyTorch distributed should be runnable using the following command:

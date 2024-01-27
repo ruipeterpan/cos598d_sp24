@@ -15,12 +15,12 @@ This assignment is designed to familiarize you with the basics of training langu
 
 ## Environment Setup
 
-You may choose to either GPUs or CPUs for this project. You are required to use up to 4 nodes in this assignment, and the nodes should be able to communicate with each other through a network interface. The nodes should have at least ~12 GB of RAM (in case of CPU training) or GPU memory (in case of GPU training) and at least ~10G of disk space.
+You may choose to either use GPUs or CPUs for this project. You are required to use up to 4 nodes in this assignment, and the nodes should be able to communicate with each other through a network interface. The nodes should have at least ~12 GB of RAM (in case of CPU training) or GPU memory (in case of GPU training) and at least ~10G of disk space.
 
 The following setup process caters to CPU-only environments. Note that this assignment is best done if you have bare-metal access to your compute nodes (i.e. you can access the nodes using a terminal not through a Slurm scheduler). You can get access to CPU nodes on CloudLab -- for instructions of accessing CloudLab, see [cloudlab.md](cloudlab.md).
 
 - Create a fork of this repository and clone your own fork on all machines
-- Install software dependencies via apt: `sudo apt-get update ; sudo apt-get install htop python3-pip`
+- Install software dependencies via apt: `sudo apt-get update ; sudo apt-get install htop dstat python3-pip`
 - Download the RTE dataset, one of the datasets within GLUE. You are only required to fine-tune on RTE in this assignment. This command downloads all datasets within GLUE: `cd $HOME ; mkdir glue_data ; cd cos598d ; python3 download_glue_data.py --data_dir $HOME/glue_data`
 - Optional: create a virtual environment (conda/venv) to install the following dependencies
 - Install CPU-only PyTorch: `pip install torch --index-url https://download.pytorch.org/whl/cpu`. If you are using GPUs, install the appropriate PyTorch [here](https://pytorch.org/get-started/locally/).
@@ -85,8 +85,15 @@ Ring AllReduce is an extremely scalable technique for performing gradient synchr
 
 ## Part 3: Distributed Data Parallel Training with PyTorch DistributedDataParallel
 
-Now, instead of writing your own gradient synchronization, use the distributed functionality provided by PyTorch. Register your model with [distributed data parallel](https://pytorch.org/docs/master/generated/torch.nn.parallel.DistributedDataParallel.html#torch.nn.parallel.DistributedDataParallel) and perform distributed training. Unlike in Part 2, you will not need to read the gradients for each layer as DistributedDataParallel performs these steps automatically. For more details, read [here](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html).
+Now, instead of writing your own gradient synchronization, use the distributed functionality provided by PyTorch. 
 
+**Task 3:** Register your model with [distributed data parallel](https://pytorch.org/docs/master/generated/torch.nn.parallel.DistributedDataParallel.html#torch.nn.parallel.DistributedDataParallel) and perform distributed training. Unlike in Part 2, you will not need to read the gradients for each layer as DistributedDataParallel performs these steps automatically. For more details, read [here](https://pytorch.org/tutorials/intermediate/ddp_tutorial.html).
+
+## [Optional] Part 4: Benchmarking Data Parallel Training
+
+In this optional section, your task is to benchmark and profile the communication aspect of data parallel training and observe how application-level hyperparameters (e.g. batch size and precision level) affect system performance. In your code for task 2(b), before you perform an `all_reduce`, record the shape/dimension and the data type (e.g. `float32`) of the tensor being communicated between nodes. Given these information, you should be able to calculate the size of the tensor in bytes (`size_in_bytes = num_elements * element_size`). Next, record the total amount of network traffic over a few (20+) iterations. You can do this by using Linux CLI tools like [dstat](https://linux.die.net/man/1/dstat) to generate network traffic statistics and export them into a csv file. Other similar tools include [tshark](https://www.wireshark.org/docs/man-pages/tshark.html), [tcpdump](https://www.tcpdump.org/manpages/tcpdump.1.html), etc.
+
+**Task 4:** Adjust the batch size (e.g. reduce it from 64 to 32 and 16) and observe how the network traffic (aggregated over a few iterations/epochs) and tensor size (for every `all_reduce`) changes. Reason about the difference (or the lack of difference) of training runs with different batch sizes.
 
 ## Deliverables
 
@@ -97,6 +104,7 @@ In the report, include the following content:
 - Run each task for 40 iterations (40 minibatches of data). Discard the timings of the first iteration and report the average time per iteration for the remaining iterations for each task (2(a), 2(b), 3). To time your code, see [this](https://realpython.com/python-timer/).
 - In the context of the [PyTorch Distributed [VLDB '18]](https://arxiv.org/pdf/2006.15704.pdf) paper, reason about the difference (or the lack of difference) among different setups.
 - Comment on the scalability of distributed ML based on your results.
+- [Optinal] If you chose to do task 4, 
 - Provide any implementation details.
 - Code for each task should be in different directories: `task2a`, `task2b`, and `task3`.
 - All your code that requires PyTorch distributed should be runnable using the following command:

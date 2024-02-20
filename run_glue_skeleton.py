@@ -134,6 +134,7 @@ def train(args, train_dataset, model, tokenizer):
                 # TODO(cos598d): perform backward pass here
                 
                 ##################################################
+                loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
             tr_loss += loss.item()
@@ -143,6 +144,7 @@ def train(args, train_dataset, model, tokenizer):
                 # TODO(cos598d): perform a single optimization step (parameter update) by invoking the optimizer
                 
                 ##################################################
+                optimizer.step()
                 model.zero_grad()
                 global_step += 1
 
@@ -157,6 +159,7 @@ def train(args, train_dataset, model, tokenizer):
         # TODO(cos598d): call evaluate() here to get the model performance after every epoch.
 
         ##################################################
+        evaluate(args, model, tokenizer, prefix="")
 
     return global_step, tr_loss / global_step
 
@@ -390,6 +393,7 @@ def main():
     # If you pass in args.model_name_or_path (e.g. "bert-base-cased"), the model weights file will be downloaded from HuggingFace.
 
     ##################################################
+    model = model_class.from_pretrained(args.model_name_or_path, config=config)
 
     if args.local_rank == 0:
         torch.distributed.barrier()  # Make sure only the first process in distributed training will download model & vocab

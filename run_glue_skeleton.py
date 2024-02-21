@@ -169,8 +169,8 @@ def train(args, train_dataset, model, tokenizer):
                 global_step += 1
 
             # Record the loss values of the first five minibatches by printing the loss value after every iteration
-            if global_step <= 5:
-                print(f"Loss value after iteration {global_step}: {loss.item()}")
+            if step <= 5:
+                print(f"Loss value after iteration {step}: {loss}")
 
             if args.max_steps > 0 and global_step > args.max_steps:
                 epoch_iterator.close()

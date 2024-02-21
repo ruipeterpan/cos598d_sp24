@@ -105,6 +105,7 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
 
+    torch.distributed.init_process_group(rank=0, world_size=1, backend="gloo", init_method="file:///tmp/somefile", group_name="pytorch-test")
     global_step = 0
     tr_loss, logging_loss = 0.0, 0.0
     model.zero_grad()
@@ -135,6 +136,27 @@ def train(args, train_dataset, model, tokenizer):
                 loss.backward()
                 ##################################################
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+
+            # Gradient sync
+            # Gather all gradients to the master process
+            if torch.distributed.get_rank() == 0:
+                # Master process
+                gathered_grads = [torch.zeros_like(param.grad.data) for param in model.parameters()]
+                for i, param in enumerate(model.parameters()):
+                    torch.distributed.gather(param.grad.data, gather_list=gathered_grads[i], dst=0)
+            else:
+                # Other processes
+                for param in model.parameters():
+                    torch.distributed.gather(param.grad.data, dst=0)
+
+            # Average gradients
+            if torch.distributed.get_rank() == 0:
+                averaged_grads = [grad / torch.distributed.get_world_size() for grad in gathered_grads]
+
+            # Scatter averaged gradients back to all processes
+            for i, param in enumerate(model.parameters()):
+                torch.distributed.scatter(param.grad.data, scatter_list=averaged_grads[i], src=0)
+
 
             tr_loss += loss.item()
             if (step + 1) % args.gradient_accumulation_steps == 0:

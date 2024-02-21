@@ -105,7 +105,7 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
 
-    torch.distributed.init_process_group(rank=0, world_size=1, backend="gloo", init_method="file:///tmp/somefile", group_name="pytorch-test")
+    torch.distributed.init_process_group(rank=args.local_rank, world_size=args.world_size, backend="gloo")
     global_step = 0
     tr_loss, logging_loss = 0.0, 0.0
     model.zero_grad()
@@ -137,28 +137,24 @@ def train(args, train_dataset, model, tokenizer):
                 ##################################################
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
-            # Gradient sync
-            print(f"Rank {torch.distributed.get_rank()} has finished the backward pass")
+            # Gradient synchronization
             # Gather all gradients to the master process
+            #print rank
+            print(f"Dist Rank {torch.distributed.get_rank()} *****************************")
+            print(f"Local Rank {args.local_rank} *****************************")
             if torch.distributed.get_rank() == 0:
                 # Master process
                 print(f"Rank {torch.distributed.get_rank()} is gathering gradients")
-                gathered_grads = [torch.zeros_like(param.grad.data) for param in model.parameters()]
-                # print model parameters shape
-                print("Model parameters shape")
-                for param in model.parameters():
-                    print(param.size())
-                    print(param.grad.size())
-                    print(param.grad.data)
-                    print(gathered_grads.size())
-                    print(gathered_grads[0].size())
+                # gathered_grads = [torch.zeros_like(param.grad.data) for param in model.parameters()]
                 for i, param in enumerate(model.parameters()):
                     print(f"Rank {torch.distributed.get_rank()} is gathering gradients for param {i}")
                     torch.distributed.gather(param.grad.data, gather_list=gathered_grads[i], dst=0)
-            else:
-                # Other processes
-                for param in model.parameters():
-                    torch.distributed.gather(param.grad.data, dst=0)
+
+                gathered_grads = [torch.zeros_like(param.grad.data) for param in model.parameters()]
+                for i, param in enumerate(model.parameters()):
+                    print(f"Rank {torch.distributed.get_rank()} is gathering gradients for param {i}")
+                    # Use gather_list as a list of tensors
+                    torch.distributed.gather(param.grad.data, gather_list=gathered_grads[i], dst=0)
 
             # Average gradients
             if torch.distributed.get_rank() == 0:

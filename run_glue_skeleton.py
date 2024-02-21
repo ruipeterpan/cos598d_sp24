@@ -144,6 +144,14 @@ def train(args, train_dataset, model, tokenizer):
                 # Master process
                 print(f"Rank {torch.distributed.get_rank()} is gathering gradients")
                 gathered_grads = [torch.zeros_like(param.grad.data) for param in model.parameters()]
+                # print model parameters shape
+                print("Model parameters shape")
+                for param in model.parameters():
+                    print(param.size())
+                    print(param.grad.size())
+                    print(param.grad.data)
+                    print(gathered_grads.size())
+                    print(gathered_grads[0].size())
                 for i, param in enumerate(model.parameters()):
                     print(f"Rank {torch.distributed.get_rank()} is gathering gradients for param {i}")
                     torch.distributed.gather(param.grad.data, gather_list=gathered_grads[i], dst=0)

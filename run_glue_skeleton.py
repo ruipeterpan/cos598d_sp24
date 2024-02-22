@@ -136,13 +136,14 @@ def train(args, train_dataset, model, tokenizer):
                 ##################################################
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
-            # torch.distributed.barrier()
+            torch.distributed.barrier()
             # Gradient synchronization
             if torch.distributed.get_rank() == 0:
                 # Master process
                 # Gather all gradients to the master process
                 print(f"**********gathering gradients**********")
-                gathered_grads = [[torch.zeros_like(param.grad.data) for _ in [0,1,2,3]] for param in model.parameters()]
+                # gathered_grads = [[torch.zeros_like(param.grad.data) for _ in [0,1,2,3]] for param in model.parameters()]
+                gathered_grads = [[] for _ in range(len(list(model.parameters())))]
                 for i, param in enumerate(model.parameters()):
                     print(f"Rank {torch.distributed.get_rank()} is gathering gradients for param {i}")
                     torch.distributed.gather(param.grad.data, gather_list=gathered_grads[i], dst=0)
@@ -156,7 +157,7 @@ def train(args, train_dataset, model, tokenizer):
                     print(f"Rank {torch.distributed.get_rank()} is scattering gradients for param {i}")
                     torch.distributed.scatter(param.grad.data, scatter_list=averaged_grads[i], src=0)
 
-            # torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
+            torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
             for i, param in enumerate(model.parameters()):
                 print(f"Rank {torch.distributed.get_rank()} received gradients for param {i} is {param.grad.data}")
 
@@ -385,7 +386,7 @@ def main():
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = torch.cuda.device_count()   
     os.environ["MASTER_ADDR"] = "128.110.218.16"
-    os.environ["MASTER_PORT"] = "12363"
+    os.environ["MASTER_PORT"] = "12364"
     torch.distributed.init_process_group(rank=args.local_rank, world_size=4, backend="gloo")
 
     # Setup logging

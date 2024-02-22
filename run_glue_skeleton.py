@@ -139,17 +139,16 @@ def train(args, train_dataset, model, tokenizer):
 
             torch.distributed.barrier()
             # Gradient synchronization
-            # Master process
-            # Gather all gradients to the master process
             for i, param in enumerate(model.parameters()):
+                # Gather gradients
                 if torch.distributed.get_rank() == 0:
                     gathered_grads = [torch.zeros_like(param.grad.data) for _ in range(4)]
                     torch.distributed.gather(param.grad.data, gather_list=gathered_grads, dst=0)
                 else:
                     torch.distributed.gather(param.grad.data, dst=0)
-                # Average gradients
+                # Average gradients then scatter
                 if torch.distributed.get_rank() == 0:
-                    averaged_grads = torch.mean(torch.stack(gathered_grads), dim=0)
+                    averaged_grads = torch.mean(torch.stack(gathered_grads), dim=1)
                     scatter_list = [averaged_grads for _ in range(4)]
                     torch.distributed.scatter(param.grad.data, scatter_list=scatter_list, src=0)
                 else:

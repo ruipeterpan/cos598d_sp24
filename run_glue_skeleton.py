@@ -148,15 +148,20 @@ def train(args, train_dataset, model, tokenizer):
                     torch.distributed.gather(param.grad.data, dst=0)
                 # Average gradients then scatter
                 if torch.distributed.get_rank() == 0:
-                    averaged_grads = torch.mean(torch.stack(gathered_grads), dim=1)
+                    averaged_grads = torch.mean(torch.stack(gathered_grads), dim=0)
                     scatter_list = [averaged_grads for _ in range(4)]
                     torch.distributed.scatter(param.grad.data, scatter_list=scatter_list, src=0)
                 else:
                     torch.distributed.scatter(param.grad.data, src=0)
+                if i == 5:
+                    print(f"Gradients after averaging: {param.grad.data}")
                 
             torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
 
             tr_loss += loss.item()
+            # print loss value after every iteration
+            if step <= 5:
+                print(f"Loss value after iteration {step}: {tr_loss}")
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 scheduler.step()  # Update learning rate schedule
                 ##################################################
@@ -169,6 +174,7 @@ def train(args, train_dataset, model, tokenizer):
             # Record the loss values of the first five minibatches by printing the loss value after every iteration
             if step <= 5:
                 print(f"Loss value after iteration {step}: {loss}")
+                print(f"Loss value after iteration {step}: {loss.item()}")
 
             if args.max_steps > 0 and global_step > args.max_steps:
                 epoch_iterator.close()

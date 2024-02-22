@@ -105,6 +105,11 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
 
+    # print rank, and world size
+    print(f"Rank {args.local_rank} *****************************")
+    print(f"Rank {torch.distributed.get_rank()} *****************************")
+    print(f"World Size {torch.distributed.get_world_size()} *****************************")
+
     torch.distributed.init_process_group(rank=args.local_rank, world_size=torch.distributed.get_world_size(), backend="gloo", init_method="file:///tmp/somefile", group_name="pytorch-test")
     global_step = 0
     tr_loss, logging_loss = 0.0, 0.0
@@ -139,9 +144,6 @@ def train(args, train_dataset, model, tokenizer):
 
             # Gradient synchronization
             # Gather all gradients to the master process
-            #print rank
-            print(f"Dist Rank {torch.distributed.get_rank()} *****************************")
-            print(f"Local Rank {args.local_rank} *****************************")
             if torch.distributed.get_rank() == 0:
                 # Master process
                 print(f"Rank {torch.distributed.get_rank()} is gathering gradients")

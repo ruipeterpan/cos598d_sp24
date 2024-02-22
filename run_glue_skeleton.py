@@ -147,7 +147,9 @@ def train(args, train_dataset, model, tokenizer):
                 print(f"**********gathering gradients********** for param {i}")
                 if torch.distributed.get_rank() == 0:
                     gathered_grads = [torch.zeros_like(param.grad.data) for _ in range(4)]
-                torch.distributed.gather(param.grad.data, gather_list=gathered_grads, dst=0)
+                    torch.distributed.gather(param.grad.data, gather_list=gathered_grads, dst=0)
+                else:
+                    torch.distributed.gather(param.grad.data, dst=0)
                 # Average gradients
                 print(f"**********averaging gradients**********")
                 averaged_grads = torch.mean(torch.stack(gathered_grads), dim=0)

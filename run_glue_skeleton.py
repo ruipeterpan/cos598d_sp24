@@ -138,14 +138,15 @@ def train(args, train_dataset, model, tokenizer):
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
             gather_list = [param.grad.data.clone for param in model.parameters()]
+            print(f"ohoooooy {param.grad.data for param in model.parameters()}")
             torch.distributed.barrier()
             # Gradient synchronization
             if torch.distributed.get_rank() == 0:
                 # Master process
                 # Gather all gradients to the master process
-                for i, grad in enumerate(gather_list):
+                for i, param in enumerate(model.parameters()):
                     print(f"**********gathering gradients********** for param {i}")
-                    gathered_grads = [torch.zeros_like(grad.clone) for _ in range(4)]
+                    gathered_grads = [torch.zeros_like(param) for _ in range(4)]
                     torch.distributed.gather(gather_list[i], gather_list=gathered_grads, dst=0)
                     # Average gradients
                     print(f"**********averaging gradients**********")

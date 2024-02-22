@@ -146,13 +146,13 @@ def train(args, train_dataset, model, tokenizer):
                 for i, grad in enumerate(gather_list):
                     print(f"**********gathering gradients********** for param {i}")
                     gathered_grads = [torch.zeros_like(grad()) for _ in range(4)]
-                    torch.distributed.gather(grad, gather_list=gathered_grads, dst=0)
+                    torch.distributed.gather(gather_list[i], gather_list=gathered_grads, dst=0)
                     # Average gradients
                     print(f"**********averaging gradients**********")
                     averaged_grads = torch.mean(torch.stack(gathered_grads), dim=0)
                     scatter_list = [averaged_grads for _ in range(4)]
                     print(f"**********scattering gradients********** for param {i}")
-                    torch.distributed.scatter(gather_list, scatter_list=scatter_list, src=0)
+                    torch.distributed.scatter(gather_list[i], scatter_list=scatter_list, src=0)
                 
             torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
             for i, param in enumerate(model.parameters()):

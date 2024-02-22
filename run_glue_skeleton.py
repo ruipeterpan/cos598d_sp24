@@ -136,6 +136,8 @@ def train(args, train_dataset, model, tokenizer):
                 ##################################################
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
+            torch.distributed.barrier()
+            print(f"Rank {torch.distributed.get_rank()} is done with backward pass")
             # Gradient synchronization
             if torch.distributed.get_rank() == 0:
                 # Master process
@@ -384,7 +386,7 @@ def main():
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = torch.cuda.device_count()   
     os.environ["MASTER_ADDR"] = "128.110.218.16"
-    os.environ["MASTER_PORT"] = "12361"
+    os.environ["MASTER_PORT"] = "12362"
     torch.distributed.init_process_group(rank=args.local_rank, world_size=4, backend="gloo")
 
     # Setup logging

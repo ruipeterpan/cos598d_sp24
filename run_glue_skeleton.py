@@ -382,8 +382,8 @@ def main():
     # set up (distributed) training
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = torch.cuda.device_count()   
-    os.environ["MASTER_ADDR"] = "128.110.218.16"
-    os.environ["MASTER_PORT"] = "12364"
+    os.environ["MASTER_ADDR"] = "128.110.217.229"
+    os.environ["MASTER_PORT"] = "12365"
     torch.distributed.init_process_group(rank=args.local_rank, world_size=4, backend="gloo")
 
     # Setup logging

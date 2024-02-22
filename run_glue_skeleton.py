@@ -356,6 +356,10 @@ def main():
                         help="If > 0: set total number of training steps to perform. Override num_train_epochs.")
     parser.add_argument("--warmup_steps", default=0, type=int,
                         help="Linear warmup over warmup_steps.")
+    parser.add_argument("--master_ip", default=0, type=str,
+                        help="IP address of the master node.")
+    parser.add_argument("--master_port", default=0, type=str,
+                        help="Port number of the master node.")
 
     # parser.add_argument("--eval_all_checkpoints", action='store_true',
     #                     help="Evaluate all checkpoints starting with the same prefix as model_name ending and ending with step number")
@@ -383,8 +387,8 @@ def main():
     # set up (distributed) training
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = torch.cuda.device_count()   
-    os.environ["MASTER_ADDR"] = "128.110.217.229"
-    os.environ["MASTER_PORT"] = "12372"
+    os.environ["MASTER_ADDR"] = args.master_ip
+    os.environ["MASTER_PORT"] = args.master_port
     torch.distributed.init_process_group(rank=args.local_rank, world_size=4, backend="gloo")
 
     # Setup logging

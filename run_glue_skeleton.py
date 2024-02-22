@@ -105,11 +105,6 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
 
-    # print rank, and world size
-    print(f"Rank {args.local_rank} *****************************")
-    print(f"Rank {torch.distributed.get_rank()} *****************************")
-    print(f"World Size {torch.distributed.get_world_size()} *****************************")
-
     global_step = 0
     tr_loss, logging_loss = 0.0, 0.0
     model.zero_grad()
@@ -394,6 +389,10 @@ def main():
     os.environ["MASTER_ADDR"] = "128.110.217.159"
     os.environ["MASTER_PORT"] = "6548"
     print("hereeeeeeeeeeeee")
+
+    # print rank, and world size
+    print(f"Rank {args.local_rank} *****************************")
+
     torch.distributed.init_process_group(rank=args.local_rank, world_size=4, backend="gloo")
     print("tttttthereeeeeeeeeeeee")
 

@@ -143,10 +143,10 @@ def train(args, train_dataset, model, tokenizer):
             if torch.distributed.get_rank() == 0:
                 # Master process
                 # Gather all gradients to the master process
-                for i, gradient in enumerate(gather_list):
+                for i, param in enumerate(gather_list):
                     print(f"**********gathering gradients********** for param {i}")
-                    gathered_grads = [torch.zeros_like(gradient.detach) for _ in range(4)]
-                    torch.distributed.gather(gradient, gather_list=gathered_grads, dst=0)
+                    gathered_grads = [torch.zeros_like(param.grad) for _ in range(4)]
+                    torch.distributed.gather(gather_list[i], gather_list=gathered_grads, dst=0)
                     # Average gradients
                     print(f"**********averaging gradients**********")
                     averaged_grads = torch.mean(torch.stack(gathered_grads), dim=0)

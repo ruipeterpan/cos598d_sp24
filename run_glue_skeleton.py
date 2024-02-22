@@ -140,7 +140,7 @@ def train(args, train_dataset, model, tokenizer):
             # Gather all gradients to the master process
             if torch.distributed.get_rank() == 0:
                 # Master process
-                # gathered_grads = [torch.zeros_like(param.grad.data) for param in model.parameters()]
+                gathered_grads = [torch.zeros_like(param.grad.data) for param in model.parameters()]
                 for i, param in enumerate(model.parameters()):
                     print(f"Rank {torch.distributed.get_rank()} is gathering gradients for param {i}")
                     torch.distributed.gather(param.grad.data, gather_list=gathered_grads[i], dst=0)
@@ -388,13 +388,7 @@ def main():
     args.n_gpu = torch.cuda.device_count()   
     os.environ["MASTER_ADDR"] = "128.110.217.159"
     os.environ["MASTER_PORT"] = "12356"
-    print("hereeeeeeeeeeeee")
-
-    # print rank, and world size
-    print(f"Rank {args.local_rank} *****************************")
-
     torch.distributed.init_process_group(rank=args.local_rank, world_size=4, backend="gloo")
-    print("tttttthereeeeeeeeeeeee")
 
     # Setup logging
     logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',

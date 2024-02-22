@@ -142,7 +142,6 @@ def train(args, train_dataset, model, tokenizer):
             # Master process
             # Gather all gradients to the master process
             for i, param in enumerate(model.parameters()):
-                print(f"**********gathering gradients********** for param {i}")
                 if torch.distributed.get_rank() == 0:
                     gathered_grads = [torch.zeros_like(param.grad.data) for _ in range(4)]
                     torch.distributed.gather(param.grad.data, gather_list=gathered_grads, dst=0)
@@ -150,17 +149,13 @@ def train(args, train_dataset, model, tokenizer):
                     torch.distributed.gather(param.grad.data, dst=0)
                 # Average gradients
                 if torch.distributed.get_rank() == 0:
-                    print(f"**********averaging gradients**********")
                     averaged_grads = torch.mean(torch.stack(gathered_grads), dim=0)
                     scatter_list = [averaged_grads for _ in range(4)]
-                    print(f"**********scattering gradients**********")
                     torch.distributed.scatter(param.grad.data, scatter_list=scatter_list, src=0)
                 else:
                     torch.distributed.scatter(param.grad.data, src=0)
                 
             torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
-            for i, param in enumerate(model.parameters()):
-                print(f"Rank {torch.distributed.get_rank()} received gradients for param {i} is {param.grad.data}")
 
             tr_loss += loss.item()
             if (step + 1) % args.gradient_accumulation_steps == 0:

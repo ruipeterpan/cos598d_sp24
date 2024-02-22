@@ -140,19 +140,20 @@ def train(args, train_dataset, model, tokenizer):
             gather_list = [param.grad.data.clone for param in model.parameters()]
             torch.distributed.barrier()
             # Gradient synchronization
-            if torch.distributed.get_rank() == 0:
-                # Master process
-                # Gather all gradients to the master process
-                for i, param in enumerate(model.parameters()):
-                    print(f"**********gathering gradients********** for param {i}")
+            
+            # Master process
+            # Gather all gradients to the master process
+            for i, param in enumerate(model.parameters()):
+                print(f"**********gathering gradients********** for param {i}")
+                if torch.distributed.get_rank() == 0:
                     gathered_grads = [torch.zeros_like(param.grad.data) for _ in range(4)]
-                    torch.distributed.gather(param.grad.data, gather_list=gathered_grads, dst=0)
-                    # Average gradients
-                    print(f"**********averaging gradients**********")
-                    averaged_grads = torch.mean(torch.stack(gathered_grads), dim=0)
-                    scatter_list = [averaged_grads for _ in range(4)]
-                    print(f"**********scattering gradients**********")
-                    torch.distributed.scatter(gather_list[i], scatter_list=scatter_list, src=0)
+                torch.distributed.gather(param.grad.data, gather_list=gathered_grads, dst=0)
+                # Average gradients
+                print(f"**********averaging gradients**********")
+                averaged_grads = torch.mean(torch.stack(gathered_grads), dim=0)
+                scatter_list = [averaged_grads for _ in range(4)]
+                print(f"**********scattering gradients**********")
+                torch.distributed.scatter(gather_list[i], scatter_list=scatter_list, src=0)
                 
             torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
             for i, param in enumerate(model.parameters()):
@@ -383,7 +384,7 @@ def main():
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = torch.cuda.device_count()   
     os.environ["MASTER_ADDR"] = "128.110.217.229"
-    os.environ["MASTER_PORT"] = "12369"
+    os.environ["MASTER_PORT"] = "12370"
     torch.distributed.init_process_group(rank=args.local_rank, world_size=4, backend="gloo")
 
     # Setup logging

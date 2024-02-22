@@ -71,7 +71,8 @@ def train(args, train_dataset, model, tokenizer):
     """ Train the model """
 
     args.train_batch_size = args.per_gpu_train_batch_size
-    train_sampler = RandomSampler(train_dataset)
+    # train_sampler = RandomSampler(train_dataset)
+    train_sampler = DistributedSampler(train_dataset, rank=args.local_rank, num_replicas=4)
     train_dataloader = DataLoader(train_dataset, sampler=train_sampler, batch_size=args.train_batch_size)
 
     if args.max_steps > 0:
@@ -136,16 +137,17 @@ def train(args, train_dataset, model, tokenizer):
                 ##################################################
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
+            gather_list = [param.grad.data.clone for param in model.parameters()]
             torch.distributed.barrier()
             # Gradient synchronization
             if torch.distributed.get_rank() == 0:
                 # Master process
                 # Gather all gradients to the master process
                 print(f"**********gathering gradients**********")
-                gathered_grads = [[torch.zeros_like(param.grad.data) ] for param in model.parameters()]
+                gathered_grads = [torch.zeros_like(gather_list) for _ in range(4)]
                 for i, param in enumerate(model.parameters()):
                     print(f"Rank {torch.distributed.get_rank()} is gathering gradients for param {i}")
-                    torch.distributed.gather(param.grad.data, gather_list=gathered_grads[i], dst=0)
+                    torch.distributed.gather(gather_list, gather_list=gathered_grads[i], dst=0)
                 # Average gradients
                 if torch.distributed.get_rank() == 0:
                     print(f"**********averaging gradients**********")

@@ -392,8 +392,10 @@ def main():
     args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = torch.cuda.device_count()   
     os.environ["MASTER_ADDR"] = "128.110.217.159"
-    # os.environ["MASTER_PORT"] = "12355"
+    os.environ["MASTER_PORT"] = "6548"
+    print("hereeeeeeeeeeeee")
     torch.distributed.init_process_group(rank=args.local_rank, world_size=4, backend="gloo")
+    print("tttttthereeeeeeeeeeeee")
 
     # Setup logging
     logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',

@@ -141,7 +141,7 @@ def train(args, train_dataset, model, tokenizer):
                 # Master process
                 # Gather all gradients to the master process
                 print(f"**********gathering gradients**********")
-                gathered_grads = [[torch.zeros_like(param.grad.data) for _ in range(torch.distributed.world_size)] for param in model.parameters()]
+                gathered_grads = [[torch.zeros_like(param.grad.data) for _ in range(torch.distributed.get_world_size())] for param in model.parameters()]
                 for i, param in enumerate(model.parameters()):
                     torch.distributed.gather(param.grad.data, gather_list=gathered_grads[i], dst=0)
                 # Average gradients

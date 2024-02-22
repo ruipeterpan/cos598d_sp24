@@ -136,8 +136,7 @@ def train(args, train_dataset, model, tokenizer):
                 ##################################################
                 torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
-            torch.distributed.barrier()
-            print(f"Rank {torch.distributed.get_rank()} is done with backward pass")
+            # torch.distributed.barrier()
             # Gradient synchronization
             if torch.distributed.get_rank() == 0:
                 # Master process
@@ -157,7 +156,7 @@ def train(args, train_dataset, model, tokenizer):
                     print(f"Rank {torch.distributed.get_rank()} is scattering gradients for param {i}")
                     torch.distributed.scatter(param.grad.data, scatter_list=averaged_grads[i], src=0)
 
-            torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
+            # torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
             for i, param in enumerate(model.parameters()):
                 print(f"Rank {torch.distributed.get_rank()} received gradients for param {i} is {param.grad.data}")
 

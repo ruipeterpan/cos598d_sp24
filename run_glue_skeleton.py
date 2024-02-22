@@ -105,7 +105,7 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("  Gradient Accumulation steps = %d", args.gradient_accumulation_steps)
     logger.info("  Total optimization steps = %d", t_total)
 
-    torch.distributed.init_process_group(rank=0, world_size=4, backend="gloo", init_method="file:///tmp/somefile", group_name="pytorch-test")
+    torch.distributed.init_process_group(rank=args.local_rank, world_size=torch.distributed.get_world_size(), backend="gloo", init_method="file:///tmp/somefile", group_name="pytorch-test")
     global_step = 0
     tr_loss, logging_loss = 0.0, 0.0
     model.zero_grad()

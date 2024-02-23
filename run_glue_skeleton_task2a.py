@@ -158,7 +158,6 @@ def train(args, train_dataset, model, tokenizer):
             torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
 
             tr_loss += loss.item()
-            # print loss value after every iteration
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 scheduler.step()  # Update learning rate schedule
                 ##################################################

@@ -140,7 +140,7 @@ def train(args, train_dataset, model, tokenizer):
             torch.distributed.barrier()
             # Gradient synchronization
             for i, param in enumerate(model.parameters()):
-                torch.distributed.all_reduce(param.grad.data, dst=0)
+                torch.distributed.all_reduce(param.grad.data)
                 
             torch.distributed.barrier()  # Make sure all processes have received averaged gradients before continuing
 

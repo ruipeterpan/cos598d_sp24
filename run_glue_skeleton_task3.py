@@ -111,6 +111,7 @@ def train(args, train_dataset, model, tokenizer):
 
     global_step = 0
     tr_loss, logging_loss = 0.0, 0.0
+    sum_elapsed_time = 0
     ddp_model = DDP(model)
     ddp_model.zero_grad()
     train_iterator = trange(int(args.num_train_epochs), desc="Epoch", disable=args.local_rank not in [-1, 0])
@@ -118,7 +119,7 @@ def train(args, train_dataset, model, tokenizer):
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration", disable=args.local_rank not in [-1, 0])
         for step, batch in enumerate(epoch_iterator):
-            start_time = time.perf_counter()
+            start_time = time.time()
             ddp_model.train()
             batch = tuple(t.to(args.device) for t in batch)
             inputs = {'input_ids':      batch[0],
@@ -154,7 +155,7 @@ def train(args, train_dataset, model, tokenizer):
 
             # Record average iteration time for the first 40 iterations
             if step < 40:
-                sum_elapsed_time += time.perf_counter() - start_time
+                sum_elapsed_time += time.time() - start_time
             if step == 40:
                 print(f"Elapsed time for 40 iterations: {sum_elapsed_time/40}")
             # Record the loss values of the first five minibatches by printing the loss value after every iteration

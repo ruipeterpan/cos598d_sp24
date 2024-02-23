@@ -155,6 +155,11 @@ def train(args, train_dataset, model, tokenizer):
                 model.zero_grad()
                 global_step += 1
 
+            # Record average iteration time for the first 40 iterations
+            if step < 40:
+                sum_elapsed_time += time.perf_counter() - start_time
+            if step == 40:
+                print(f"Elapsed time for 40 iterations: {sum_elapsed_time/40}")
             # Record the loss values of the first five minibatches by printing the loss value after every iteration
             if step <= 5:
                 print(f"Loss value after iteration {step}: {loss}")

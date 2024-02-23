@@ -172,7 +172,7 @@ def train(args, train_dataset, model, tokenizer):
             # Record average iteration time for the first 40 iterations
             if step < 40:
                 sum_elapsed_time += time.time() - start_time
-            if step == 40:
+            if step == 39:
                 print(f"Elapsed time for 40 iterations: {sum_elapsed_time/40}")
             # Record the loss values of the first five minibatches by printing the loss value after every iteration
             if step <= 5:
